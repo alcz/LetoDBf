@@ -558,9 +558,10 @@ static HB_USHORT leto_KeyToStr( LETOAREAP pArea, char * szKey, char cType, PHB_I
 #else
          if( pArea->area.cdPage != HB_CDP_PAGE() )
          {
-            char * pBuff = hb_cdpnDup( hb_itemGetCPtr( pKey ), ( HB_SIZE * ) &uiKeyLen, HB_CDP_PAGE(), pArea->area.cdPage );
+            HB_SIZE nCdpLen = ( HB_SIZE ) uiKeyLen;
+            char * pBuff = hb_cdpnDup( hb_itemGetCPtr( pKey ), &nCdpLen, HB_CDP_PAGE(), pArea->area.cdPage );
 
-            memcpy( szKey, pBuff, uiKeyLen );
+            memcpy( szKey, pBuff, nCdpLen );
             hb_xfree( pBuff );
          }
          else
