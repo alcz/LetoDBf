@@ -6073,11 +6073,12 @@ static HB_ERRCODE letoRddInfo( LPRDDNODE pRDD, HB_USHORT uiIndex, unsigned int u
       case RDDI_REFRESHCOUNT:
          if( pConnection )
          {
-            HB_BOOL fSet = HB_IS_LOGICAL( pItem );
+            HB_BOOL fSet = pConnection->fRefreshCount;
 
-            hb_itemPutL( pItem, pConnection->fRefreshCount );
-            if( fSet )
+            if( HB_IS_LOGICAL( pItem ) )
                pConnection->fRefreshCount = hb_itemGetL( pItem );
+
+            hb_itemPutL( pItem, fSet );
          }
          else
             hb_itemPutL( pItem, HB_TRUE );
