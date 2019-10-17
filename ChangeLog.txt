@@ -2,6 +2,15 @@
      * Change, ! Fix, % Optimization, + Addition, - Removal, ; Comment
 */
 
+2019-10-17 16:25 UTC+0200 Aleksander Czajczynski (hb fki.pl)
+  * source/client/leto1.c
+  * source/client/letocl.c
+    * changed the default LETO RDD setting RDDI_REFRESHCOUNT from .T.
+      to .F. - as it is more reasonable performance default for
+      user code that is calling RecCount() in a loop. Previous default
+      generated significant amount of network packets for such (sometimes
+      common) code.
+
 2019-10-17 16:09 UTC+0200 Aleksander Czajczynski (hb fki.pl)
   * source/client/leto1.c
     ! make RddInfo( RDDI_REFRESHCOUNT ) actually settable. It was stuck

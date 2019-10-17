@@ -3402,7 +3402,7 @@ void LetoConnectionOpen( LETOCONNECTION * pConnection, const char * szAddr, int 
       pConnection->pAddr[ uiAddrLen ] = '\0';
       pConnection->iZipRecord = -1;
       pConnection->fDbEvalCompat = HB_TRUE;
-      pConnection->fRefreshCount = HB_TRUE;
+      pConnection->fRefreshCount = HB_FALSE; /* changed as reasonable performance default to support clients calling RecCount() in a loop */
       pConnection->iBufRefreshTime = 1000;
       memset( pConnection->cDopcode, 0, LETO_DOPCODE_LEN + 1 );
       pConnection->hSockPipe[ 0 ] = FS_ERROR;

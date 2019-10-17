@@ -6081,7 +6081,7 @@ static HB_ERRCODE letoRddInfo( LPRDDNODE pRDD, HB_USHORT uiIndex, unsigned int u
             hb_itemPutL( pItem, fSet );
          }
          else
-            hb_itemPutL( pItem, HB_TRUE );
+            hb_itemPutL( pItem, HB_FALSE );
          break;
 
       case RDDI_BUFKEYNO:
