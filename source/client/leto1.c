@@ -5070,6 +5070,60 @@ static HB_ERRCODE letoOrderInfo( LETOAREAP pArea, HB_USHORT uiIndex, LPDBORDERIN
          break;
       }
 
+      case DBOI_RELKEYPOS:
+      {
+         char *    ptr;
+         PHB_ITEM  pItem = pOrderInfo->itmNewVal;
+         char *    pData = szData + 4;
+         char      szDbl[ 18 ];
+         HB_ULONG  ulLen;
+
+         if( ! ( pItem && HB_IS_NUMERIC( pItem ) &&
+                 hb_dblToStr( szDbl, sizeof( szDbl ), hb_itemGetND( pItem ), 15 ) ) )
+            szDbl[ 0 ] = '\0';
+
+         ulLen = eprintf( pData, "%c;%lu;%d;%s;%lu;%lu;%s;", LETOCMD_dboi, pTable->hTable, uiIndex,
+                  ( pTagInfo ) ? pTagInfo->TagName : "", pTable->ulRecNo, uiTag, szDbl );
+
+         if( ! ( ulLen = leto_SendRecv( pConnection, pArea, pData, ulLen, 1021 ) ) )
+            return HB_FAILURE;
+
+         ptr = leto_firstchar( pConnection );
+
+         if( *ptr == 'T' )
+         {
+            /* undersized or crafted packet arrived with no record body */
+            if( ulLen < 8 )
+               return HB_FAILURE;
+
+            /* when DBOI_RELKEYPOS caused a record pointer move */
+            leto_ParseRecord( pConnection, pArea->pTable, ptr );
+            leto_SetAreaFlags( pArea );
+            pTable->ptrBuf = NULL;
+            if( pTable->fAutoRefresh )
+                pTable->llCentiSec = leto_MilliSec();
+            if( pArea->area.lpdbRelations )
+               return SELF_SYNCCHILDREN( ( AREAP ) pArea );
+         }
+         else if( *ptr )
+         {
+            /* leto_Recv() seem to always null-terminate strings,
+               so this *CLen() call should be safe */
+            int iWidth, iDec, iLen = strlen( ptr );
+            HB_MAXINT lValue;
+            double dValue;
+
+            if( hb_valStrnToNum( ptr, iLen, &lValue, &dValue, &iDec, &iWidth ) )
+               hb_itemPutNDLen( pOrderInfo->itmResult, dValue, iWidth, iDec );
+            else
+               hb_itemPutNIntLen( pOrderInfo->itmResult, lValue, iWidth );
+         }
+         else
+            hb_itemPutND( pOrderInfo->itmResult, 0.0 );
+
+         break;
+      }
+
       case DBOI_ORDERCOUNT:
       {
          PHB_ITEM pItem = ( pOrderInfo->itmNewVal ? pOrderInfo->itmNewVal : NULL );

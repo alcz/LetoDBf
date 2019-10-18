@@ -14885,10 +14885,12 @@ static void leto_Info( PUSERSTRU pUStru, char * szData )
 static void leto_OrderInfo( PUSERSTRU pUStru, char * szData )
 {
    AREAP        pArea = ( AREAP ) hb_rddGetCurrentWorkAreaPointer();
-   char       * pOrder, * pOrdPar;
+   char       * pOrder, * pOrdPar, * pOrdNum, * pOrdSet;
    const char * pData;
-   char         szData1[ 20 ];
-   int          nParam = leto_GetParam( szData, &pOrder, &pOrdPar, NULL );
+   char         szData1[ 21 ];
+   char       * szData2 = NULL;
+   int          nParam = leto_GetParam( szData, &pOrder, &pOrdPar, &pOrdNum, &pOrdSet, NULL );
+   HB_ULONG     ulLen;
 
    if( nParam < 2 || ! pArea )
       pData = szErr2;
@@ -14901,6 +14903,8 @@ static void leto_OrderInfo( PUSERSTRU pUStru, char * szData )
       else
       {
          DBORDERINFO pOrderInfo;
+         char        szDbl[ 18 ];
+         HB_ULONG    ulRecNo = 0;
 
          memset( &pOrderInfo, 0, sizeof( DBORDERINFO ) );
          pOrderInfo.itmOrder = hb_itemPutC( NULL, pOrder );
@@ -14915,6 +14919,39 @@ static void leto_OrderInfo( PUSERSTRU pUStru, char * szData )
                pOrderInfo.itmResult = hb_itemPutL( NULL, HB_FALSE );
                if( nParam > 2 && pOrdPar[ 0 ] )
                   pOrderInfo.itmNewVal = hb_itemPutL( NULL, ( pOrdPar[ 0 ] == 'T' ) );
+               break;
+
+            case DBOI_RELKEYPOS:
+               pOrderInfo.itmResult = hb_itemPutND( NULL, 0.0 );
+               leto_GotoIf( pArea, strtoul( pOrdPar, NULL, 10 ) );
+
+               /* currently DBOI_RELKEYPOS needs index bag [filename] or order specified by number
+                  LETO code haven't supplied any of those combinations, so here we do */
+
+               if( nParam > 1 && pOrdNum[ 0 ] )
+               {
+                  HB_MAXINT nOrd = 0;
+                  double dVal;
+
+                  hb_strToNum( pOrdNum, &nOrd, &dVal );
+                  hb_itemPutNInt( pOrderInfo.itmOrder, nOrd );
+
+                  if( nParam > 2 && pOrdSet[ 0 ] )
+                  {
+                     HB_MAXINT nVal;
+                     HB_BOOL fDbl;
+
+                     SELF_RECNO( pArea, &ulRecNo );
+
+                     fDbl = hb_strToNum( pOrdSet, &nVal, &dVal );
+
+                     if( fDbl )
+                        pOrderInfo.itmNewVal = hb_itemPutND( NULL, dVal );
+                     else
+                        pOrderInfo.itmNewVal = hb_itemPutNInt( NULL, nVal );
+                  }
+               }
+
                break;
 
             case DBOI_KEYADD:
@@ -14947,18 +14984,60 @@ static void leto_OrderInfo( PUSERSTRU pUStru, char * szData )
          if( pUStru->iHbError )
             pOrderInfo.itmResult = hb_itemPutL( pOrderInfo.itmResult, HB_FALSE );
 
-         szData1[ 0 ] = '+';
-         szData1[ 1 ] = hb_itemGetL( pOrderInfo.itmResult ) ? 'T' : 'F';
-         szData1[ 2 ] = ';';
-         szData1[ 3 ] = '\0';
+         if( uiCommand == DBOI_RELKEYPOS && nParam > 2 && pOrdSet[ 0 ] )
+         {
+            HB_ULONG ulRecNew;
+
+            if( SELF_RECNO( pArea, &ulRecNew ) != HB_FAILURE &&
+                ulRecNew && ulRecNew != ulRecNo )
+            {
+                HB_ULONG ulRecLen = leto_recLen( pUStru->pCurAStru->pTStru );
+                szData2 = ulRecLen ? ( char * ) hb_xgrab( ulRecLen + 1 ) : NULL;
+                if( szData2 )
+                {
+                   ulLen = leto_rec( pUStru, pUStru->pCurAStru, pArea, szData2 + 1, NULL ) + 1;
+                   szData2[ 0 ] = '+';
+                   szData2[ 1 ] = 'T';
+                   szData2[ 2 ] = 'T';
+                   szData2[ 3 ] = ';';
+                }
+            }
+
+            if( ! szData2 )
+            {
+                szData1[ 0 ] = '+';
+                szData1[ 1 ] = 'F';
+                szData1[ 2 ] = ';';
+                szData1[ 3 ] = '\0';
+            }
+         }
+         else if( uiCommand == DBOI_RELKEYPOS &&
+                  sizeof( szDbl ) + 3 <= sizeof( szData1 ) &&
+                  ( hb_dblToStr( szDbl, sizeof( szDbl ),
+                    hb_itemGetND( pOrderInfo.itmResult ), 15 ) ) )
+            eprintf( szData1, "+%s;", szDbl );
+         else
+         {
+            szData1[ 0 ] = '+';
+            szData1[ 1 ] = hb_itemGetL( pOrderInfo.itmResult ) ? 'T' : 'F';
+            szData1[ 2 ] = ';';
+            szData1[ 3 ] = '\0';
+         }
          hb_itemRelease( pOrderInfo.itmResult );
          if( pOrderInfo.itmNewVal )
             hb_itemRelease( pOrderInfo.itmNewVal );
+
          pData = szData1;
       }
    }
 
-   leto_SendAnswer( pUStru, pData, strlen( pData ) );
+   if( szData2 )
+   {
+      leto_SendAnswer( pUStru, szData2, ulLen );
+      hb_xfree( szData2 );
+   }
+   else
+      leto_SendAnswer( pUStru, pData, strlen( pData ) );
 }
 
 static void leto_Pong( PUSERSTRU pUStru, char * szData )

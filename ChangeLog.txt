@@ -2,6 +2,25 @@
      * Change, ! Fix, % Optimization, + Addition, - Removal, ; Comment
 */
 
+2019-10-18 19:42 UTC+0200 Aleksander Czajczynski (hb fki.pl)
+  * source/server/letofunc.c
+    + support for getting and setting DBOI_RELKEYPOS added to
+      leto_OrderInfo() C-function. NOTE: although other index
+      setgets are implemented in leto_OrdFunc(), i've found the
+      former a cleaner place to work with.
+
+  * source/server/leto1.c
+    + much useful for scrollbars, implemented client access to
+      index positioning functions:
+
+      DbOrderInfo( DBOI_RELKEYPOS, [<xOrd>], [<cIndexFile>] )
+         -> <nPos>
+      ; returns a value between 0.0 and 1.0
+
+      DbOrderInfo( DBOI_RELKEYPOS, [<xOrd>], [<cIndexFile>], <nNewPos> )
+      ; moves record pointer according to the value and recieve
+        field values in reply packet
+
 2019-10-17 16:25 UTC+0200 Aleksander Czajczynski (hb fki.pl)
   * source/client/leto1.c
   * source/client/letocl.c
