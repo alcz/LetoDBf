@@ -4158,7 +4158,8 @@ void LetoDbCreateAlias( const char * szFile, char * szAlias )
 
    /* convert to upper case */
    ptr = szAlias;
-   ptrEnd = ptr + HB_RDD_MAX_ALIAS_LEN;
+   ptrEnd = ptr + ( ( ( ptrEnd - ptrBeg ) < ( HB_RDD_MAX_ALIAS_LEN ) ) ?
+                      ( ptrEnd - ptrBeg ) : ( HB_RDD_MAX_ALIAS_LEN ) );
    while( ptr < ptrEnd )
    {
       if( *ptrBeg >= 'a' && *ptrBeg <= 'z' )
@@ -4169,7 +4170,7 @@ void LetoDbCreateAlias( const char * szFile, char * szAlias )
             break;
       }
    }
-   szAlias[ HB_RDD_MAX_ALIAS_LEN ] = '\0';
+   *ptr = '\0';
 }
 
 LETOTABLE * LetoDbCreateTable( LETOCONNECTION * pConnection, const char * szFile, const char * szAlias,
