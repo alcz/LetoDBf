@@ -2,6 +2,12 @@
      * Change, ! Fix, % Optimization, + Addition, - Removal, ; Comment
 */
 
+2020-03-06 12:00 UTC+0200 Aleksander Czajczynski (hb fki.pl)
+  * include/srvleto.h
+  * source/common/common_c.c
+    * added headers for specifying fd_set type, on Linux flavours
+      using musl libc they are in time.h
+
 2019-10-22 19:00 UTC+0200 Aleksander Czajczynski (hb fki.pl)
   * source/server/letocl.c
     ! fixed C-API LetoDbCreateAlias() introduced in 2019-05-09 15:25,
